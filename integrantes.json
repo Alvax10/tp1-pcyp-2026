@@ -1,7 +1,17 @@
 {
-  "grupo": "REEMPLAZAR_CON_NOMBRE_DEL_GRUPO",
+  "grupo": "Los Threaders",
   "repositorio": "REEMPLAZAR_CON_URL_DEL_REPOSITORIO",
   "integrantes": [
+    {
+      "nombre": "REEMPLAZAR",
+      "documento": "REEMPLAZAR",
+      "usuarioGit": "REEMPLAZAR"
+    }
+    {
+      "nombre": "Emilio Tarrago",
+      "documento": "44198050",
+      "usuarioGit": "E1000io-bit"
+    }
     {
       "nombre": "REEMPLAZAR",
       "documento": "REEMPLAZAR",
