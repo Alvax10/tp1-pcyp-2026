@@ -1,37 +1,31 @@
 {
   "grupo": "Los Threaders",
-  "repositorio": "REEMPLAZAR_CON_URL_DEL_REPOSITORIO",
+  "repositorio": "https://github.com/Alvax10/tp1-pcyp-2026",
   "integrantes": [
     {
       "nombre": "Álvaro Bastía",
       "documento": "44783012",
       "usuarioGit": "Alvax10"
     }
-    
     {
       "nombre": "Carlos Britez",
       "documento": "44221771",
       "usuarioGit": "carlosbritez-8"
     }
-    
     {
       "nombre": "Sol Género",
       "documento": "46541859",
       "usuarioGit": "solcha-g"
     }
-    
     {
       "nombre": "Emilio Tarrago",
       "documento": "44198050",
       "usuarioGit": "E1000io-bit"
-    }
-    
+    }    
     {
       "nombre": "Hebe Azul Usandivaras",
       "documento": "44768075",
       "usuarioGit": "HebeAUsandivaras"
     }
-    
   ]
 }
-
