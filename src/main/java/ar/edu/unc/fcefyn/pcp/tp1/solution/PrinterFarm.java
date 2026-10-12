@@ -51,9 +51,9 @@ public class PrinterFarm {
     // Busca la primera impresora disponible. Solo se llama desde reserve (ya con el lock tomado).
     private Printer findAvailable() {
         for (Printer[] fila : matrix) {
-            for (Printer p : fila) {
-                if (p.state() == PrinterState.AVAILABLE) {
-                    return p;
+            for (Printer printer : fila) {
+                if (printer.getCurrentState() == PrinterState.AVAILABLE) {
+                    return printer;
                 }
             }
         }
