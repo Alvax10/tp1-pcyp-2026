@@ -48,6 +48,23 @@ public class PrinterFarm {
         notifyAll();
     }
 
+    //Para conseguir la cantidad de ordenes nos conviene crear un metodo que recorra la matriz y obtenga las ordenes de cada una y las sume
+    // Habra concurrencia ? -> No siempre que consideremos que totalOders solo se deberia ejecutar al final, cuando totadas las impresora
+    // Ya terminaron.
+
+    // Suma los usos de todas las impresoras.
+    // PRECONDICION: llamar solo cuando todos los workers terminaron (despues de join()).
+    // Por eso no necesita synchronized: join() garantiza la visibilidad de lo escrito.
+    public int totalOrders() {
+        int totalOrder = 0;
+        for (Printer[] fila : matrix) {
+            for (Printer p : fila) {
+                totalOrder += p.usageCount();
+            }
+        }
+        return totalOrder;
+    }
+
     // Busca la primera impresora disponible. Solo se llama desde reserve (ya con el lock tomado).
     private Printer findAvailable() {
         for (Printer[] fila : matrix) {
