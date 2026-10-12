@@ -5,14 +5,14 @@ public class PrinterFarm {
     private int availableCount; // cantidad de impresoras disponibles, si es 0 lo mando a dormir
 
     //Construcctor de la clase fram
-    public PrinterFarm(int filas, int columnas){
-        matrix = new Printer[filas][columnas];
-        for(int i=0; i<filas ; i++){
-            for(int j=0; j<columnas; j++){
+    public PrinterFarm(int rows, int columns){
+        matrix = new Printer[rows][columns];
+        for(int i=0; i<rows ; i++){
+            for(int j=0; j<columns; j++){
                 matrix[i][j] = new Printer(); //Definir constructor de impresora
             }
         }
-        availableCount = filas * columnas;
+        availableCount = rows * columns;
     }
 
     // Como hago para que solo un hilo pueda operar a la vez el avaiableCount ? -> al usar synchronized
@@ -26,12 +26,12 @@ public class PrinterFarm {
     // Metodo reserve: reserva una impresora disponible para la orden.
     // Si no hay ninguna (availableCount == 0), el hilo se duerme hasta que alguien haga release.
     //  Todo el metodo es seccion critica: buscar + reservar + restar tiene que ser atomico.
-    public synchronized Printer reserve(Order order) throws InterruptedException {
+    public synchronized Printer reserve(PrintOrder order) throws InterruptedException {
         while (availableCount == 0) {
             wait(); // soltamos el lock y duerme; al despertar vuelve a chequear la condicion
         }
         Printer printer = findAvailable();
-        printer.reserve(order);   // AVAILABLE -> RESERVED, suma usos, guarda la orden
+        printer.reserve(order.getId());   // AVAILABLE -> RESERVED, suma usos, guarda la orden
         availableCount--;
         return printer;
     }
@@ -57,9 +57,9 @@ public class PrinterFarm {
     // Por eso no necesita synchronized: join() garantiza la visibilidad de lo escrito.
     public int totalOrders() {
         int totalOrder = 0;
-        for (Printer[] fila : matrix) {
-            for (Printer p : fila) {
-                totalOrder += p.usageCount();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                totalOrder += matrix[i][j].getUsageCount();
             }
         }
         return totalOrder;
@@ -67,9 +67,11 @@ public class PrinterFarm {
 
     // Busca la primera impresora disponible. Solo se llama desde reserve (ya con el lock tomado).
     private Printer findAvailable() {
-        for (Printer[] fila : matrix) {
-            for (Printer printer : fila) {
-                if (printer.getCurrentState() == PrinterState.AVAILABLE) {
+        for(int i = 0; i< matrix.length; i++){
+            for(int j = 0; j < matrix[i].length; j++){
+                Printer printer = matrix[i][j];
+
+                if (printer.isAvailable()) {
                     return printer;
                 }
             }
