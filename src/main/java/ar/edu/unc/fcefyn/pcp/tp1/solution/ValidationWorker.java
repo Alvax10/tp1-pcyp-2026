@@ -1,9 +1,10 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
-
 import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 import ar.edu.unc.fcefyn.pcp.tp1.api.OutcomeDecider;
 import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterState;
 import ar.edu.unc.fcefyn.pcp.tp1.api.SimulationConfig;
+
+/** --------------------------- STAGE 2 - VALIDATION ------------------------------ **/
 
 public class ValidationWorker extends Worker{
 
@@ -26,11 +27,11 @@ public class ValidationWorker extends Worker{
         if(OutcomeDecider.isModelValid(printOrder.getId(), simulationConfig)){
             //Si el modelo es valido:
             //Cambia la orden de WAITING_VALIDATION -> READY_TO_PRINT, la impresora permanece reservada
-            orderSource.setNewState(printOrder,OrderState.READY_TO_PRINT);
+            orderSource.SetOrderState(printOrder,OrderState.READY_TO_PRINT, getName());
         }else{
             //Si el modelo no es valido:
             //Cambia la orden de WAITING_VALIDATION -> REJECTED, la orden queda terminada
-            orderSource.setNewState(printOrder,OrderState.REJECTED);
+            orderSource.SetOrderState(printOrder,OrderState.REJECTED, getName());
             //Cambia la impresora de RESERVED -> AVAILABLE, la impresora puede recibir otro trabajo
             printer.setState(PrinterState.AVAILABLE);
         }
