@@ -49,4 +49,8 @@ public class Printer {
     public int getUsageCount() {
         return usageCount;
     }
+
+    public Integer getAssignedOrderId() {
+        return assignedOrderId;
+    }
 }
