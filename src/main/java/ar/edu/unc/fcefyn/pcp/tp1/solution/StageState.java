@@ -1,6 +1,6 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
 /** Stage's States */
-public enum Stage {
+public enum StageState {
     ASSIGN, VALIDATION, PRINTING, QUALITY
 }

@@ -2,11 +2,11 @@ package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
 public abstract class Worker implements Runnable {
 
-    private final Stage stage;
+    private final StageState stage;
     private final String name;
     private final long delayMs;
 
-    protected Worker(Stage stage, String name, long delayMs) {
+    protected Worker(StageState stage, String name, long delayMs) {
         this.stage = stage;
         this.name = name;
         this.delayMs = delayMs;
@@ -45,7 +45,7 @@ public abstract class Worker implements Runnable {
         System.out.println("[" + stage + "][" + name + "] " + msg + "\n");
     }
 
-    public Stage getStage()  { return this.stage; }
+    public StageState getStage()  { return this.stage; }
     public String getName()  { return this.name; }
     public long getDelayMs() { return this.delayMs; }
 }
