@@ -1,6 +1,6 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
-/** Etapas del pipeline (ajustá a tu enum Stage real si ya lo tenés). */
+/** Stage's States */
 public enum Stage {
     ASSIGN, VALIDATION, PRINTING, QUALITY
 }
