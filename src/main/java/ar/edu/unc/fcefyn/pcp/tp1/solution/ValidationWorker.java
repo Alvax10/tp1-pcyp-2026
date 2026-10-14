@@ -13,7 +13,7 @@ public class ValidationWorker extends Worker{
     private final SimulationConfig simulationConfig;
     private final Printer printer;
 
-    ValidationWorker(Stage stage, String name, long delayMs, OrderSource orderSource, SimulationConfig simulationConfig, Printer printer){
+    ValidationWorker(StageState stage, String name, long delayMs, OrderSource orderSource, SimulationConfig simulationConfig, Printer printer){
         super(stage, name, delayMs);
         this.orderSource = orderSource;
         this.simulationConfig = simulationConfig;

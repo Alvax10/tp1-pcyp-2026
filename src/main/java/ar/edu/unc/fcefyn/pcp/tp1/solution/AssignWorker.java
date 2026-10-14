@@ -7,7 +7,7 @@ public class AssignWorker extends Worker{
     private final OrderSource orderSource;
     private final PrinterFarm printerFarm;
 
-    AssignWorker(Stage stage, String name, long delayMs, OrderSource orderSource, PrinterFarm printerFarm){
+    AssignWorker(StageState stage, String name, long delayMs, OrderSource orderSource, PrinterFarm printerFarm){
         super(stage, name,delayMs);
         this.orderSource = orderSource;
         this.printerFarm = printerFarm;
