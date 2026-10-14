@@ -9,7 +9,7 @@ public class PrinterFarm {
         matrix = new Printer[rows][columns];
         for(int i=0; i<rows ; i++){
             for(int j=0; j<columns; j++){
-                matrix[i][j] = new Printer(); //Definir constructor de impresora
+                matrix[i][j] = new Printer(i, j); //Llamo a constructor de impresora
             }
         }
         availableCount = rows * columns;
@@ -37,7 +37,7 @@ public class PrinterFarm {
     // Cuando una impresora termina debe ejecutalo para sumarse uno en available que esa suma es una seccion
     // critica, para que no se sobre escriban datos,
     public synchronized void release(Printer printer) {
-        printer.release();        // RESERVED -> AVAILABLE, limpia la orden
+        printer.setNewState(AVAILABLE);        // RESERVED -> AVAILABLE, limpia la orden se podria cambiar a un metodo release (Su responsable seria Printer).
         availableCount++;
         notifyAll();
     }
