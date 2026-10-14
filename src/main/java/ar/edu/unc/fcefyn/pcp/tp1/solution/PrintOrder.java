@@ -7,7 +7,7 @@ public class PrintOrder {
     private Printer printer;
     public boolean processing;
 
-    public PrintOrder(int id) {
+    public PrintOrder(int id) { // constructor
         this.id = id;
     }
 

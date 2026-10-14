@@ -16,7 +16,7 @@ public class OrderSource {
             terminalCount = 0;
             totalOrders = OrderAmount;
             for (int i = 1; i <= totalOrders; i++) orders.add(new PrintOrder(i));
-            // TODO acá se loguea ORDER_CREATED de cada una
+            // TODO acá se loguea ORDER_CREATED de cada una, como eventos
             // tendre que hacer cambios una vez que la clase Logger este lista
         }
     }
