@@ -3,29 +3,30 @@ import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 
 /** --------------------------- STAGE 1 - ASSIGN ------------------------------ **/
 
-public class AssignWorker extends Worker{
+public class AssignWorker extends Worker {
     private final OrderSource orderSource;
     private final PrinterFarm printerFarm;
 
-    AssignWorker(StageState stage, String name, long delayMs, OrderSource orderSource, PrinterFarm printerFarm){
-        super(stage, name,delayMs);
+    AssignWorker(StageState stage, String name, long delayMs, OrderSource orderSource, PrinterFarm printerFarm) {
+        super(stage, name, delayMs);
         this.orderSource = orderSource;
         this.printerFarm = printerFarm;
     }
 
     @Override
-    protected void process() throws InterruptedException{
+    protected boolean process() throws InterruptedException {
         //Tomo una orden en estado CREATED (bloqueante: si no hay, duermo en el monitor de OrderSource)
         PrintOrder printOrder = orderSource.getOrderInState(OrderState.CREATED);
-
         //null = todas las ordenes ya son terminales: no queda trabajo, el worker termina
         if (printOrder == null) {
-            Thread.currentThread().interrupt();
-            return;
+            return false;
         }
 
+        //Tiempo de la etapa, fuera de cualquier lock
+        simulateWork();
+
         //Obtengo una impresora disponible y la reservo de manera exclusiva
-        //(dentro del monitor de PrinterFarm: AVAILABLE -> RESERVED y suma un uso)
+        //(dentro del monitor de PrinterFarm: AVAILABLE -> RESERVED y suma un uso).
         //Si no hay ninguna disponible, el hilo duerme en PrinterFarm hasta que alguien haga release
         Printer printer = printerFarm.reserve(printOrder);
 
@@ -33,7 +34,8 @@ public class AssignWorker extends Worker{
         //en WAITING_VALIDATION (a traves del lock de OrderSource) ya va a tener su impresora (invariante 5)
         printOrder.setPrinter(printer);
 
-        //Cambio la orden a WAITING_VALIDATION
+        //CREATED -> WAITING_VALIDATION
         orderSource.SetOrderState(printOrder, OrderState.WAITING_VALIDATION, this);
+        return true;
     }
 }
