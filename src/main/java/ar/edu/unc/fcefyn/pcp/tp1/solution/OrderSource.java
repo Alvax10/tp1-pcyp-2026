@@ -9,7 +9,6 @@ public class OrderSource {
     private List<PrintOrder> orders = new ArrayList<>();
     private int totalOrders;
     private int terminalCount, assignmentCount, validationCount, printingCount, qualityControlCount = 0;
-    private int sequence = 1;
 
     public OrderSource(int OrderAmount) {
         synchronized (LOCK) {
@@ -57,24 +56,20 @@ public class OrderSource {
                 default: break;
             }
             
-            sequence++;
-            
+            // Se registra DENTRO del lock: las filas de eventos.csv quedan en el mismo orden
+            // en que se confirman las transiciones. La secuencia la numera el Logger.
             Logger.recordEvent(
-                sequence, 
-                worker, 
+                worker,
                 order.getId(),
-                EventState.ORDER_STATE_CHANGED, 
-                prev, newState, 
-                order.getPrinter().getPrinterId()
+                prev, newState,
+                order.getPrinter() == null ? null : order.getPrinter().getPrinterId()
             );
             
             if (newState.isTerminal()) {
                 terminalCount++;
 
-                // EVENTO ORDEN TERMINADA
-                Logger.recordElement(order.getId(), newState, order.getPrinter().getPrinterId(), assignmentCount, validationCount, printingCount, qualityControlCount);
-                
-                // TODO escribir la fila de eventos.csv (dentro del lock, para respetar el orden)
+                // elementos.csv NO se escribe aca: tiene que quedar ordenado por orderId,
+                // asi que lo escribe ConcurrentSimulation al final (despues de los join()).
                 if (terminalCount == totalOrders){
                     // EVENTO TODAS LAS ORDENES YA TERMINADAS
                 }

@@ -1,72 +1,131 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
 import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
+
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+/**
+ * Escribe eventos.csv y elementos.csv dentro de config.outputDirectory().
+ *
+ * Recurso compartido: los writers y el contador de secuencia. Todos los metodos publicos son
+ * static synchronized (monitor = Logger.class), asi que dos hilos nunca escriben a la vez.
+ * Ademas, recordEvent se llama DENTRO del lock de OrderSource, por lo que las filas quedan en el
+ * mismo orden en que se confirman las transiciones (lo pide el enunciado).
+ *
+ * Ciclo de vida: init(...) antes de arrancar los hilos -> record* durante la simulacion ->
+ * close() despues de los join().
+ */
 public final class Logger {
-    private static BufferedWriter EventsWriter;
-    private static BufferedWriter ElementsWriter;
 
-    public static void init() {
+    public static final String EVENTS_HEADER =
+            "sequence;elapsedMs;thread;orderId;stage;event;fromState;toState;printer";
+    public static final String ELEMENTS_HEADER =
+            "orderId;finalState;printer;assignmentCount;validationCount;printingCount;qualityControlCount";
 
-        // CREA DOS ARCHIVOS DE TEXTO
-        // EVENTOS Y ELEMENTOS
-        try {
-            EventsWriter = new BufferedWriter(
-                    new FileWriter("resultados/eventos.csv", true));
+    private static BufferedWriter eventsWriter;
+    private static BufferedWriter elementsWriter;
+    private static long sequence;
+    private static long startMillis;
 
-            ElementsWriter = new BufferedWriter(
-                    new FileWriter("resultados/elementos.csv", true));
-
-        } catch (IOException e){
-            System.err.println("No se pudo crear los writters");
-        }
+    private Logger() {
     }
 
-    private static void write(BufferedWriter writter, String valueToWrite) {
-        if (writter == null) {
-            return;
-        }
-        try {
-            writter.write(valueToWrite);
-            writter.newLine();
-            writter.flush();
-        } catch (IOException e) {
-            System.err.println("No se pudo escribir en el archivo");
-        }
+    /**
+     * Crea (o pisa) los archivos en outputDirectory y escribe las cabeceras.
+     * startMillis es el instante de inicio de la simulacion, para calcular elapsedMs.
+     */
+    public static synchronized void init(Path outputDirectory, long simulationStartMillis) throws IOException {
+        Files.createDirectories(outputDirectory);
+        // newBufferedWriter sin opciones = CREATE + TRUNCATE_EXISTING: cada corrida empieza de cero
+        eventsWriter = Files.newBufferedWriter(outputDirectory.resolve("eventos.csv"), StandardCharsets.UTF_8);
+        elementsWriter = Files.newBufferedWriter(outputDirectory.resolve("elementos.csv"), StandardCharsets.UTF_8);
+        sequence = 0;
+        startMillis = simulationStartMillis;
+
+        write(eventsWriter, EVENTS_HEADER);
+        write(elementsWriter, ELEMENTS_HEADER);
     }
 
-    public static void recordEvent(int sequence, Worker worker, int orderId, EventState event, OrderState from, OrderState to, String printerId) {
-
-        String line = String.join(";",
-                Long.toString(++sequence),
-                Long.toString(worker.getDelayedMs()),
-                Thread.currentThread().getName(),
-                Integer.toString(orderId),
-                worker.getStage(),
-                event.toString(),
-                from.toString() == null ? "" : from.toString(),
-                to.toString() == null ? "" : to.toString(),
-                printerId == null ? "" : printerId);
-
-        write(EventsWriter, line);
+    /** Fila inicial de cada orden: stage INITIALIZATION, fromState y printer vacios. */
+    public static synchronized void recordCreated(int orderId) {
+        writeEvent(Thread.currentThread().getName(), orderId, StageState.INITIALIZATION,
+                EventState.ORDER_CREATED, null, OrderState.CREATED, null);
     }
 
-    public static void recordElement(int orderId, OrderState finalState, String printerId, int assignmentCount,
-                                   int validationCount, int printingCount, int qualityControlCount) {
+    /** Una fila por transicion de una orden. Se llama dentro del lock de OrderSource. */
+    public static synchronized void recordEvent(Worker worker, int orderId, OrderState from,
+                                                OrderState to, String printerId) {
+        writeEvent(Thread.currentThread().getName(), orderId, worker.getStage(),
+                EventState.ORDER_STATE_CHANGED, from, to, printerId);
+    }
 
+    /** Una fila por orden. Se debe llamar al final, recorriendo las ordenes por orderId. */
+    public static synchronized void recordElement(int orderId, OrderState finalState, String printerId,
+                                                  int assignmentCount, int validationCount,
+                                                  int printingCount, int qualityControlCount) {
         String line = String.join(";",
                 Integer.toString(orderId),
-                finalState.toString(),
-                printerId,
+                finalState.name(),
+                nullToEmpty(printerId),
                 Integer.toString(assignmentCount),
                 Integer.toString(validationCount),
                 Integer.toString(printingCount),
-                Integer.toString(qualityControlCount),
-                Thread.currentThread().getName());
+                Integer.toString(qualityControlCount));
 
-        write(ElementsWriter, line);
+        write(elementsWriter, line);
+    }
+
+    /** Vuelca y cierra ambos archivos. Llamar despues de que todos los hilos terminaron. */
+    public static synchronized void close() throws IOException {
+        try {
+            if (eventsWriter != null) eventsWriter.close();
+        } finally {
+            if (elementsWriter != null) elementsWriter.close();
+            eventsWriter = null;
+            elementsWriter = null;
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------
+    // Privados: siempre se ejecutan con el monitor Logger.class ya tomado
+
+    private static void writeEvent(String thread, int orderId, StageState stage, EventState event,
+                                   OrderState from, OrderState to, String printerId) {
+        sequence++;
+        long elapsed = Math.max(0, System.currentTimeMillis() - startMillis);
+
+        String line = String.join(";",
+                Long.toString(sequence),
+                Long.toString(elapsed),
+                thread,
+                Integer.toString(orderId),
+                stage.name(),
+                event.name(),
+                from == null ? "" : from.name(),
+                to == null ? "" : to.name(),
+                nullToEmpty(printerId));
+
+        write(eventsWriter, line);
+    }
+
+    private static void write(BufferedWriter writer, String line) {
+        if (writer == null) {
+            throw new IllegalStateException("Logger no inicializado: llamar a Logger.init(...) primero");
+        }
+        try {
+            writer.write(line);
+            writer.newLine();
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo escribir en el archivo de resultados", e);
+        }
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }
