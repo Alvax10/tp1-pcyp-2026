@@ -19,7 +19,7 @@ public class OrderSource {
             } 
     }
 
-    public static PrintOrder getOrderInState(OrderState wanted) throws InterruptedException {
+    public PrintOrder getOrderInState(OrderState wanted) throws InterruptedException {
         synchronized (LOCK) {
             while (true) {
                 for (PrintOrder o : orders) {
@@ -62,7 +62,7 @@ public class OrderSource {
             Logger.recordEvent(
                 sequence, 
                 worker, 
-                order.getId()
+                order.getId(),
                 EventState.ORDER_STATE_CHANGED, 
                 prev, newState, 
                 order.getPrinter().getPrinterId()

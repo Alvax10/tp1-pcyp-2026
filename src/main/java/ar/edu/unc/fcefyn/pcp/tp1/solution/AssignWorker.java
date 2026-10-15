@@ -20,6 +20,6 @@ public class AssignWorker extends Worker{
         //La reservo de manera exclusiva
         printerFarm.reserve(printOrder);
         //Cambio la orden a WAITING_VALIDATION
-        orderSource.SetOrderState(printOrder, OrderState.WAITING_VALIDATION, getName());
+        orderSource.SetOrderState(printOrder, OrderState.WAITING_VALIDATION, this);
     }
 }
