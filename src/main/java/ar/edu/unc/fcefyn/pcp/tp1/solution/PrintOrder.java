@@ -6,12 +6,14 @@ public class PrintOrder {
     private OrderState state = OrderState.CREATED;
     private Printer printer;
     public boolean processing;
+    // cuantas veces paso esta orden por cada etapa (para elementos.csv). Solo se tocan con el lock de OrderSource
+    int assignmentCount, validationCount, printingCount, qualityControlCount = 0;
 
     public PrintOrder(int id) { // constructor
         this.id = id;
     }
 
-    // menor id primero, porque la lista está ordenada por ID
+    // menor id primero, porque la lista estÃ¡ ordenada por ID
 
 
     public int getId(){
@@ -35,4 +37,9 @@ public class PrintOrder {
     public void SetState(OrderState state){
         this.state = state;
     }
+
+    public int getAssignmentCount(){ return assignmentCount; }
+    public int getValidationCount(){ return validationCount; }
+    public int getPrintingCount(){ return printingCount; }
+    public int getQualityControlCount(){ return qualityControlCount; }
 }
