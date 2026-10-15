@@ -55,7 +55,7 @@ public final class Logger {
         write(EventsWriter, line);
     }
 
-    public static void recordEvent(int orderId, OrderState finalState, String printerId, int assignmentCount,
+    public static void recordElement(int orderId, OrderState finalState, String printerId, int assignmentCount,
                                    int validationCount, int printingCount, int qualityControlCount) {
 
         String line = String.join(";",
