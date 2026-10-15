@@ -14,8 +14,8 @@ import ar.edu.unc.fcefyn.pcp.tp1.api.SimulationConfig;
  * En esta etapa NO se usan impresoras: la impresora ya fue liberada en PrintingWorker.
  * Ambos resultados son estados terminales, asi que cada orden que pasa por aca termina.
  *
- * Sincronizacion: este worker no tiene estado compartido propio. Todo el acceso concurrente
- * a las ordenes pasa por OrderSource (monitor LOCK):
+ * Sincronizacion: este worker no tiene estado compartido propio.
+ *     el acceso concu a las ordenes pasa por OrderSource (monitor LOCK):
  *   - getOrderInState(PRINTED) marca la orden como "processing" dentro del lock, por lo que
  *     dos QualityWorker no deben pueder auditar la misma orden (invariante 3).
  *   - Si no hay ordenes PRINTED, el hilo queda en LOCK.wait() (sin espera activa) hasta que

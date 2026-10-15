@@ -48,6 +48,8 @@ public class PrinterFarm {
 
     // La usa PrintingWorker cuando la impresión falla (RESERVED -> OUT_OF_SERVICE).
     // No toca availableCount: la impresora ya se descontó al reservarla y no vuelve a estar disponible.
+    // No deberia pasar nada por no ser synchronized pues para setearla debe pasar por reserve entonces
+    // no se da el caso de que un hilo lo vea como available para hacer algo.
     public synchronized void setOutOfService(Printer printer) {
         printer.setState(PrinterState.OUT_OF_SERVICE);
     }
