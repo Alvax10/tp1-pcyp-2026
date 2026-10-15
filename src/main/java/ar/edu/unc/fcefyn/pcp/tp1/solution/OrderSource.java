@@ -27,7 +27,7 @@ public class OrderSource {
                 for (PrintOrder o : orders) {
                     if (o.getCurrentState() == wanted && !o.processing) { o.processing = true; return o; }
                 }
-                if (terminalCount == orders.size()) return null;   // el worker termina
+                //if (terminalCount == orders.size()) return null;   // el worker termina
                 LOCK.wait();
             }
         }

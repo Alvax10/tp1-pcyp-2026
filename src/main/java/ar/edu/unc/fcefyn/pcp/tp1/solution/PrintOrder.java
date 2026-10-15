@@ -21,6 +21,11 @@ public class PrintOrder {
     public Printer getPrinter(){
         return this.printer;
     }
+
+    public void setPrinter(Printer pr){
+        this.printer = pr;
+    }
+    
     // not thread safe
     public OrderState getCurrentState() {
         return this.state;
