@@ -11,13 +11,13 @@ public class ValidationWorker extends Worker{
 
     private final OrderSource orderSource;
     private final SimulationConfig simulationConfig;
-    private final Printer printer;
+    private final PrinterFarm printerFarm;
 
-    ValidationWorker(StageState stage, String name, long delayMs, OrderSource orderSource, SimulationConfig simulationConfig, Printer printer){
+    ValidationWorker(StageState stage, String name, long delayMs, OrderSource orderSource, SimulationConfig simulationConfig, PrinterFarm printerFarm){
         super(stage, name, delayMs);
         this.orderSource = orderSource;
         this.simulationConfig = simulationConfig;
-        this.printer = printer;
+        this.printerFarm = printerFarm;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class ValidationWorker extends Worker{
             //Cambia la orden de WAITING_VALIDATION -> REJECTED, la orden queda terminada
             orderSource.SetOrderState(printOrder,OrderState.REJECTED, this);
             //Cambia la impresora de RESERVED -> AVAILABLE, la impresora puede recibir otro trabajo
-            printer.setState(PrinterState.AVAILABLE);
+            printerFarm.release(printOrder.getPrinter());
         }
     }
 }
