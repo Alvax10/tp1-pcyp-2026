@@ -26,19 +26,19 @@ public class PrintingWorker extends Worker {
     @Override
     protected void process() throws InterruptedException {
 
-        readyToPrintOrder = orderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order         // printer's order from previous stage
+        readyToPrintOrder = OrderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order         // printer's order from previous stage
         Thread.sleep(getDelayMs()); // simulates the time that the workers take to do the task
 
         if (OutcomeDecider.isPrintSuccessful(readyToPrintOrder.getId(), this.config)) {
 
-            readyToPrintOrder.SetState(OrderState.PRINTED); // READY_TO_PRINT -> PRINTED
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this.getName()); // READY_TO_PRINT -> PRINTED
             printerFarm.release(readyToPrintOrder.getPrinter()); // RESERVED -> AVAILABLE
 
         } else {
 
             printer = readyToPrintOrder.getPrinter();
-            readyToPrintOrder.SetState(OrderState.PRINT_FAILED); // READY_TO_PRINT -> PRINT_FAILED
-            printer.setState(PrinterState.OUT_OF_SERVICE);   // RESERVED -> OUT_OF_SERVICE
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINT_FAILED, this.getName()); // READY_TO_PRINT -> PRINT_FAILED
+            printerFarm.setOutOfService(printer);   // RESERVED -> OUT_OF_SERVICE
         }
     }
 }
