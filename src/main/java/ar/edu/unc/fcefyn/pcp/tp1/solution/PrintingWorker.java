@@ -9,8 +9,9 @@ import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 public class PrintingWorker extends Worker {
 
     private final OrderSource orderSource; // de donde toma (READY_TO_PRINT)
-    // destino si imprime bien (hacia calidad)
-    private PrinterFarm printerFarm;       // destino si imprime bien (hacia calidad
+    private PrintOrder readyToPrintOrder;  // destino si imprime bien (hacia calidad)
+    private PrinterFarm printerFarm;       // destino si imprime bien (hacia calidad)
+    private Printer printer;
     private final SimulationConfig config;
 
     public PrintingWorker(StageState stage, String name, long delayedMs, OrderSource orderSource,
@@ -24,19 +25,19 @@ public class PrintingWorker extends Worker {
 
     @Override
     protected void process() throws InterruptedException {
-        PrintOrder readyToPrintOrder = OrderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order
-                        // printer's order from previous stage
+
+        readyToPrintOrder = OrderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order         // printer's order from previous stage
         Thread.sleep(getDelayMs()); // simulates the time that the workers take to do the task
 
         if (OutcomeDecider.isPrintSuccessful(readyToPrintOrder.getId(), this.config)) {
 
-            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this); // READY_TO_PRINT -> PRINTED
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this.getName()); // READY_TO_PRINT -> PRINTED
             printerFarm.release(readyToPrintOrder.getPrinter()); // RESERVED -> AVAILABLE
 
         } else {
 
-            Printer printer = readyToPrintOrder.getPrinter();
-            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINT_FAILED, this.getName()); // READY_TO_PRINT -> PRINT_FAILED
+            printer = readyToPrintOrder.getPrinter();
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINT_FAILED, this); // READY_TO_PRINT -> PRINT_FAILED
             printerFarm.setOutOfService(printer);   // RESERVED -> OUT_OF_SERVICE
         }
     }

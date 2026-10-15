@@ -11,7 +11,7 @@ public class ValidationWorker extends Worker{
     private final SimulationConfig simulationConfig;
     private final PrinterFarm printerFarm;
 
-    ValidationWorker(StageState stage, String name, long delayMs, OrderSource orderSource, 
+    ValidationWorker(StageState stage, String name, long delayMs, OrderSource orderSource,
                      SimulationConfig simulationConfig, PrinterFarm printerFarm){
         super(stage, name, delayMs);
         this.orderSource = orderSource;
@@ -42,10 +42,11 @@ public class ValidationWorker extends Worker{
             //   a los AssignWorker que esperan una impresora.
             //   Se libera ANTES de pasar a REJECTED para que nunca exista una orden terminal con
             //   impresora reservada (invariante 6).
-            printerFarm.release(printOrder.getPrinter());
             //2) Cambia la orden de WAITING_VALIDATION -> REJECTED, la orden queda terminada.
             //   La orden conserva la referencia a la impresora como dato historico (elementos.csv).
-            orderSource.SetOrderState(printOrder,OrderState.REJECTED, this);
+            //   1) y 2) se hacen juntos dentro del lock de OrderSource (atomico)
+            orderSource.SetOrderState(printOrder,OrderState.REJECTED, this,
+                    () -> printerFarm.release(printOrder.getPrinter()));
         }
     }
 }
