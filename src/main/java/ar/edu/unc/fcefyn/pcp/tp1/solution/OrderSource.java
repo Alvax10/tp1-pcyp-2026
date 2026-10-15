@@ -52,4 +52,10 @@ public class OrderSource {
             LOCK.notifyAll();
         }
     }
+
+    public List<PrintOrder> getAllOrders(){
+        synchronized (LOCK){
+            return orders = new ArrayList<>(orders);
+        }
+    }
 }
