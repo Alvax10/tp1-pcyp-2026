@@ -46,6 +46,12 @@ public class PrinterFarm {
         notifyAll();
     }
 
+    // La usa PrintingWorker cuando la impresión falla (RESERVED -> OUT_OF_SERVICE).
+    // No toca availableCount: la impresora ya se descontó al reservarla y no vuelve a estar disponible.
+    public synchronized void setOutOfService(Printer printer) {
+        printer.setState(PrinterState.OUT_OF_SERVICE);
+    }
+
     //Para conseguir la cantidad de ordenes nos conviene crear un metodo que recorra la matriz y obtenga las ordenes de cada una y las sume
     // Habra concurrencia ? -> No siempre que consideremos que totalOders solo se deberia ejecutar al final, cuando totadas las impresora
     // Ya terminaron.
