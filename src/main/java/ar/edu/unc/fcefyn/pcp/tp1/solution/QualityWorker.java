@@ -48,11 +48,8 @@ public class QualityWorker extends Worker {
             return;
         }
 
-        //Decision determinista (fuera del lock: no toca estado compartido)
-        boolean approved = OutcomeDecider.isQualityApproved(printedOrder.getId(), config);
-
         //Transicion de estado DENTRO de OrderSource (lock + notifyAll + conteo de terminales)
-        if (approved) {
+        if (isApproved(printedOrder)) {
             orderSource.SetOrderState(printedOrder, OrderState.APPROVED, getName());  // PRINTED -> APPROVED
         } else {
             orderSource.SetOrderState(printedOrder, OrderState.DEFECTIVE, getName()); // PRINTED -> DEFECTIVE
@@ -60,5 +57,9 @@ public class QualityWorker extends Worker {
 
         // La demora (qualityControlDelayMillis) la aplica Worker.run() una vez por orden procesada.
         // No hay que liberar impresora: ya se libero en la etapa de impresion.
+    }
+    //Decision determinista (fuera del lock: no toca estado compartido)
+    private boolean isApproved(PrintOrder order) {
+        return OutcomeDecider.isQualityApproved(order.getId(), config);
     }
 }
