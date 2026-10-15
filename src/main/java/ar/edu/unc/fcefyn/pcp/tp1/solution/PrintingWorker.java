@@ -9,9 +9,8 @@ import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 public class PrintingWorker extends Worker {
 
     private final OrderSource orderSource; // de donde toma (READY_TO_PRINT)
-    private PrintOrder readyToPrintOrder;  // destino si imprime bien (hacia calidad)
-    private PrinterFarm printerFarm;       // destino si imprime bien (hacia calidad)
-    private Printer printer;
+    // destino si imprime bien (hacia calidad)
+    private PrinterFarm printerFarm;       // destino si imprime bien (hacia calidad
     private final SimulationConfig config;
 
     public PrintingWorker(StageState stage, String name, long delayedMs, OrderSource orderSource,
@@ -25,20 +24,25 @@ public class PrintingWorker extends Worker {
 
     @Override
     protected void process() throws InterruptedException {
-
-        readyToPrintOrder = orderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order         // printer's order from previous stage
-        Thread.sleep(getDelayMs()); // simulates the time that the workers take to do the task
+        PrintOrder readyToPrintOrder = orderSource.getOrderInState(OrderState.READY_TO_PRINT); //  gets a READY_TO_PRINT order
+                        // printer's order from previous stage
+        // null = todas las ordenes ya son terminales: no queda trabajo, el worker termina
+        if (readyToPrintOrder == null) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+        // (la demora la aplica Worker.run() una vez por orden: aca no se duerme otra vez)
 
         if (OutcomeDecider.isPrintSuccessful(readyToPrintOrder.getId(), this.config)) {
 
-            readyToPrintOrder.SetState(OrderState.PRINTED); // READY_TO_PRINT -> PRINTED
-            printerFarm.release(readyToPrintOrder.getPrinter()); // RESERVED -> AVAILABLE
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this,   // READY_TO_PRINT -> PRINTED
+                    () -> printerFarm.release(readyToPrintOrder.getPrinter()));      // RESERVED -> AVAILABLE (atomico)
 
         } else {
 
-            printer = readyToPrintOrder.getPrinter();
-            readyToPrintOrder.SetState(OrderState.PRINT_FAILED); // READY_TO_PRINT -> PRINT_FAILED
-            printer.setState(PrinterState.OUT_OF_SERVICE);   // RESERVED -> OUT_OF_SERVICE
+            Printer printer = readyToPrintOrder.getPrinter();
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINT_FAILED, this,  // READY_TO_PRINT -> PRINT_FAILED
+                    () -> printerFarm.setOutOfService(printer));                     // RESERVED -> OUT_OF_SERVICE (atomico)
         }
     }
 }
