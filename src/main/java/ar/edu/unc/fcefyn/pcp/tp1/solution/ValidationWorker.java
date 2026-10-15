@@ -27,11 +27,11 @@ public class ValidationWorker extends Worker{
         if(OutcomeDecider.isModelValid(printOrder.getId(), simulationConfig)){
             //Si el modelo es valido:
             //Cambia la orden de WAITING_VALIDATION -> READY_TO_PRINT, la impresora permanece reservada
-            orderSource.SetOrderState(printOrder,OrderState.READY_TO_PRINT, getName());
+            orderSource.SetOrderState(printOrder,OrderState.READY_TO_PRINT, this);
         }else{
             //Si el modelo no es valido:
             //Cambia la orden de WAITING_VALIDATION -> REJECTED, la orden queda terminada
-            orderSource.SetOrderState(printOrder,OrderState.REJECTED, getName());
+            orderSource.SetOrderState(printOrder,OrderState.REJECTED, this);
             //Cambia la impresora de RESERVED -> AVAILABLE, la impresora puede recibir otro trabajo
             printer.setState(PrinterState.AVAILABLE);
         }
