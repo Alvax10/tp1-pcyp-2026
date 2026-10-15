@@ -38,15 +38,14 @@ public final class Logger {
         }
     }
 
-    public static void recordEvent(int sequence, long elapsedMs,Thread thread, int orderId, StageState stage,
-                              EventState event, OrderState from, OrderState to, String printerId) {
+    public static void recordEvent(int sequence, Worker worker, int orderId, EventState event, OrderState from, OrderState to, String printerId) {
 
         String line = String.join(";",
                 Long.toString(++sequence),
-                Long.toString(elapsedMs),
+                Long.toString(worker.getDelayedMs()),
                 Thread.currentThread().getName(),
                 Integer.toString(orderId),
-                stage.name(),
+                worker.getStage(),
                 event.toString(),
                 from.toString() == null ? "" : from.toString(),
                 to.toString() == null ? "" : to.toString(),
