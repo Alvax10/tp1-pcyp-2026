@@ -1,5 +1,9 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
+import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterState;
+import ar.edu.unc.fcefyn.pcp.tp1.solution.Printer;
+import ar.edu.unc.fcefyn.pcp.tp1.solution.PrintOrder;
+
 public class PrinterFarm {
     private final Printer[][] matrix; //Matriz de impresora donde las voy a buscar
     private int availableCount; // cantidad de impresoras disponibles, si es 0 lo mando a dormir
@@ -37,7 +41,7 @@ public class PrinterFarm {
     // Cuando una impresora termina debe ejecutalo para sumarse uno en available que esa suma es una seccion
     // critica, para que no se sobre escriban datos,
     public synchronized void release(Printer printer) {
-        printer.setNewState(AVAILABLE);        // RESERVED -> AVAILABLE, limpia la orden se podria cambiar a un metodo release (Su responsable seria Printer).
+        printer.setState(PrinterState.AVAILABLE);        // RESERVED -> AVAILABLE, limpia la orden se podria cambiar a un metodo release (Su responsable seria Printer).
         availableCount++;
         notifyAll();
     }
