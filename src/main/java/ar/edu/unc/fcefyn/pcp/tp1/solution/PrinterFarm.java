@@ -1,5 +1,6 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
+import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterSnapshot;
 import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterState;
 import ar.edu.unc.fcefyn.pcp.tp1.solution.Printer;
 import ar.edu.unc.fcefyn.pcp.tp1.solution.PrintOrder;
@@ -46,6 +47,12 @@ public class PrinterFarm {
         notifyAll();
     }
 
+    // La usa PrintingWorker cuando la impresión falla (RESERVED -> OUT_OF_SERVICE).
+    // No toca availableCount: la impresora ya se descontó al reservarla y no vuelve a estar disponible.
+    public synchronized void setOutOfService(Printer printer) {
+        printer.setState(PrinterState.OUT_OF_SERVICE);
+    }
+
     //Para conseguir la cantidad de ordenes nos conviene crear un metodo que recorra la matriz y obtenga las ordenes de cada una y las sume
     // Habra concurrencia ? -> No siempre que consideremos que totalOders solo se deberia ejecutar al final, cuando totadas las impresora
     // Ya terminaron.
@@ -60,6 +67,18 @@ public class PrinterFarm {
             }
         }
         return totalOrder;
+    }
+
+    // Snapshot de todas las impresoras para el SimulationResult. Se llama al final, despues de los join().
+    public synchronized java.util.List<PrinterSnapshot> snapshots() {
+        java.util.List<PrinterSnapshot> result = new java.util.ArrayList<>();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                Printer p = matrix[i][j];
+                result.add(new PrinterSnapshot(p.getPrinterId(), p.getCurrentState(), p.getUsageCount(), p.getAssignedOrderId()));
+            }
+        }
+        return result;
     }
 
     // Busca la primera impresora disponible. Solo se llama desde reserve (ya con el lock tomado).

@@ -42,7 +42,7 @@ public class PrintingWorker extends Worker {
 
             Printer printer = readyToPrintOrder.getPrinter();
             orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINT_FAILED, this,  // READY_TO_PRINT -> PRINT_FAILED
-                    () -> printerFarm.setOutOfService(printer));                     // RESERVED -> OUT_OF_SERVICE (atomico)
+                                      ()->printerFarm.setOutOfService(printer));                     // RESERVED -> OUT_OF_SERVICE (atomico)
         }
     }
 }
