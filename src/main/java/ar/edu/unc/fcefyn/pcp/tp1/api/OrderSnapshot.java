@@ -10,4 +10,3 @@ public record OrderSnapshot(
         int qualityControlCount
 ) {
 }
-

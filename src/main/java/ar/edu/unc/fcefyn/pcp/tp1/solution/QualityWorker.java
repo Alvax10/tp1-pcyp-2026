@@ -50,9 +50,9 @@ public class QualityWorker extends Worker {
 
         //Transicion de estado DENTRO de OrderSource (lock + notifyAll + conteo de terminales)
         if (isApproved(printedOrder)) {
-            orderSource.SetOrderState(printedOrder, OrderState.APPROVED, getName());  // PRINTED -> APPROVED
+            orderSource.SetOrderState(printedOrder, OrderState.APPROVED, this);  // PRINTED -> APPROVED
         } else {
-            orderSource.SetOrderState(printedOrder, OrderState.DEFECTIVE, getName()); // PRINTED -> DEFECTIVE
+            orderSource.SetOrderState(printedOrder, OrderState.DEFECTIVE, this); // PRINTED -> DEFECTIVE
         }
 
         // La demora (qualityControlDelayMillis) la aplica Worker.run() una vez por orden procesada.

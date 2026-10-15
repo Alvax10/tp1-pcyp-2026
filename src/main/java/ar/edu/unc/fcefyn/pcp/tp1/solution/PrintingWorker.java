@@ -30,7 +30,7 @@ public class PrintingWorker extends Worker {
 
         if (OutcomeDecider.isPrintSuccessful(readyToPrintOrder.getId(), this.config)) {
 
-            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this.getName()); // READY_TO_PRINT -> PRINTED
+            orderSource.SetOrderState(readyToPrintOrder, OrderState.PRINTED, this); // READY_TO_PRINT -> PRINTED
             printerFarm.release(readyToPrintOrder.getPrinter()); // RESERVED -> AVAILABLE
 
         } else {
