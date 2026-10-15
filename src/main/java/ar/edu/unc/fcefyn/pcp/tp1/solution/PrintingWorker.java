@@ -10,7 +10,7 @@ public class PrintingWorker extends Worker {
 
     private final OrderSource orderSource; // de donde toma (READY_TO_PRINT)
     private PrintOrder readyToPrintOrder;  // destino si imprime bien (hacia calidad)
-    private PrinterFarm printerFarm;               // destino si imprime bien (hacia calidad)
+    private PrinterFarm printerFarm;       // destino si imprime bien (hacia calidad)
     private Printer printer;
     private final SimulationConfig config;
 
