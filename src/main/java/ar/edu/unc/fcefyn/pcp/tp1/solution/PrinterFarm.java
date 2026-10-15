@@ -1,5 +1,6 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
+import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterSnapshot;
 import ar.edu.unc.fcefyn.pcp.tp1.api.PrinterState;
 import ar.edu.unc.fcefyn.pcp.tp1.solution.Printer;
 import ar.edu.unc.fcefyn.pcp.tp1.solution.PrintOrder;
@@ -48,8 +49,6 @@ public class PrinterFarm {
 
     // La usa PrintingWorker cuando la impresión falla (RESERVED -> OUT_OF_SERVICE).
     // No toca availableCount: la impresora ya se descontó al reservarla y no vuelve a estar disponible.
-    // No deberia pasar nada por no ser synchronized pues para setearla debe pasar por reserve entonces
-    // no se da el caso de que un hilo lo vea como available para hacer algo.
     public synchronized void setOutOfService(Printer printer) {
         printer.setState(PrinterState.OUT_OF_SERVICE);
     }
@@ -68,6 +67,18 @@ public class PrinterFarm {
             }
         }
         return totalOrder;
+    }
+
+    // Snapshot de todas las impresoras para el SimulationResult. Se llama al final, despues de los join().
+    public synchronized java.util.List<PrinterSnapshot> snapshots() {
+        java.util.List<PrinterSnapshot> result = new java.util.ArrayList<>();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                Printer p = matrix[i][j];
+                result.add(new PrinterSnapshot(p.getPrinterId(), p.getCurrentState(), p.getUsageCount(), p.getAssignedOrderId()));
+            }
+        }
+        return result;
     }
 
     // Busca la primera impresora disponible. Solo se llama desde reserve (ya con el lock tomado).
