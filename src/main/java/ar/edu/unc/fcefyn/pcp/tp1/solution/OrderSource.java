@@ -8,7 +8,7 @@ public class OrderSource {
     private final Object LOCK = new Object();
     private List<PrintOrder> orders = new ArrayList<>();
     private int totalOrders;
-    private int terminalCount, assignmentCount, validationCount, printingCount, qualityControlCount = 0;
+    private int terminalCount = 0;
 
     public OrderSource(int OrderAmount) {
         synchronized (LOCK) {
@@ -25,10 +25,10 @@ public class OrderSource {
                     if (o.getCurrentState() == wanted && !o.processing) { 
 
                         switch (wanted) {
-                            case OrderState.CREATED: assignmentCount ++; break;
-                            case OrderState.WAITING_VALIDATION: validationCount ++; break;
-                            case OrderState.READY_TO_PRINT: printingCount ++; break;
-                            case OrderState.PRINTED: qualityControlCount ++; break;
+                            case OrderState.CREATED: o.assignmentCount ++; break;
+                            case OrderState.WAITING_VALIDATION: o.validationCount ++; break;
+                            case OrderState.READY_TO_PRINT: o.printingCount ++; break;
+                            case OrderState.PRINTED: o.qualityControlCount ++; break;
                             default: break;
                         }
                         
@@ -43,19 +43,16 @@ public class OrderSource {
     }
 
     public void SetOrderState(PrintOrder order,OrderState newState, Worker worker) {
+        SetOrderState(order, newState, worker, null);
+    }
+
+    public void SetOrderState(PrintOrder order,OrderState newState, Worker worker, Runnable printerAction) {
         synchronized (LOCK) {
+            if (printerAction != null) printerAction.run();
             OrderState prev = order.getCurrentState();
             order.SetState(newState);
             order.processing = false;
 
-            switch (prev) {
-                case OrderState.CREATED: assignmentCount --; break;
-                case OrderState.WAITING_VALIDATION: validationCount --; break;
-                case OrderState.READY_TO_PRINT: printingCount --; break;
-                case OrderState.PRINTED: qualityControlCount --; break;
-                default: break;
-            }
-            
             // Se registra DENTRO del lock: las filas de eventos.csv quedan en el mismo orden
             // en que se confirman las transiciones. La secuencia la numera el Logger.
             Logger.recordEvent(
@@ -67,12 +64,6 @@ public class OrderSource {
             
             if (newState.isTerminal()) {
                 terminalCount++;
-
-                // elementos.csv NO se escribe aca: tiene que quedar ordenado por orderId,
-                // asi que lo escribe ConcurrentSimulation al final (despues de los join()).
-                if (terminalCount == totalOrders){
-                    // EVENTO TODAS LAS ORDENES YA TERMINADAS
-                }
             }
             
             //  EVENTO CAMBIO DE ESTADO
@@ -82,7 +73,7 @@ public class OrderSource {
 
     public List<PrintOrder> getAllOrders(){
         synchronized (LOCK){
-            return orders = new ArrayList<>(orders);
+            return new ArrayList<>(orders);
         }
     }
 }
