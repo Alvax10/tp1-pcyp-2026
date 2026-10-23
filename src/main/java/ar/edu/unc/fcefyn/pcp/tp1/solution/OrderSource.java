@@ -1,44 +1,57 @@
 package ar.edu.unc.fcefyn.pcp.tp1.solution;
-import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 
+import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderSource {
-    private final Object LOCK = new Object();
-    private List<PrintOrder> orders = new ArrayList<>();
-    private int totalOrders;
+
+    private final int totalOrders;
     private int terminalCount = 0;
+    private ArrayList<PrintOrder> allOrders;
+    private final OrderQueue ordersCreated;
+    private final OrderQueue ordersWaitingValidation;
+    private final OrderQueue ordersReadyToPrint;
+    private final OrderQueue ordersPrinted;
+    private boolean closed;
 
     public OrderSource(int OrderAmount) {
-        synchronized (LOCK) {
-            orders = new ArrayList<>();
-            totalOrders = OrderAmount;
-            for (int i = 1; i <= totalOrders; i++)orders.add(new PrintOrder(i));
-            } 
+
+        totalOrders = OrderAmount;
+        closed = false;
+        allOrders = new ArrayList<>();
+
+        ordersCreated = new OrderQueue();
+        for (int i = 1; i <= OrderAmount; i++) {
+            ordersCreated.putOrder(new PrintOrder(i));
+        }
+
+        ordersWaitingValidation = new OrderQueue();
+        ordersReadyToPrint = new OrderQueue();
+        ordersPrinted = new OrderQueue();
     }
 
-    public PrintOrder getOrderInState(OrderState wanted) throws InterruptedException {
-        synchronized (LOCK) {
-            while (true) {
-                for (PrintOrder o : orders) {
-                    if (o.getCurrentState() == wanted && !o.processing) { 
+    public PrintOrder getOrderInState(OrderState wanted) throws InterruptedException, IllegalArgumentException {
 
-                        switch (wanted) {
-                            case OrderState.CREATED: o.assignmentCount ++; break;
-                            case OrderState.WAITING_VALIDATION: o.validationCount ++; break;
-                            case OrderState.READY_TO_PRINT: o.printingCount ++; break;
-                            case OrderState.PRINTED: o.qualityControlCount ++; break;
-                            default: break;
-                        }
-                        
-                        o.processing = true; 
-                        return o;
-                    }
-                }
-                if (terminalCount == orders.size()) return null;   // el worker termina
-                LOCK.wait();
-            }
+        closed = (terminalCount == totalOrders);
+        if (closed) {
+
+            ordersCreated.Close();
+            ordersWaitingValidation.Close();
+            ordersReadyToPrint.Close();
+            ordersPrinted.Close();
+
+            return null;
+        }
+
+        switch (wanted) {
+
+            case OrderState.CREATED: return ordersCreated.takeOrder();
+            case OrderState.WAITING_VALIDATION: return ordersWaitingValidation.takeOrder();
+            case OrderState.READY_TO_PRINT: return ordersReadyToPrint.takeOrder();
+            case OrderState.PRINTED: return ordersPrinted.takeOrder();
+            default:
+                throw new IllegalArgumentException("La transición: " + wanted + " no es soportada \n");
         }
     }
 
@@ -47,33 +60,43 @@ public class OrderSource {
     }
 
     public void SetOrderState(PrintOrder order,OrderState newState, Worker worker, Runnable printerAction) {
-        synchronized (LOCK) {
-            if (printerAction != null) printerAction.run();
-            OrderState prev = order.getCurrentState();
-            order.SetState(newState);
-            order.processing = false;
 
-            // Se registra DENTRO del lock: las filas de eventos.csv quedan en el mismo orden
-            // en que se confirman las transiciones. La secuencia la numera el Logger.
-            Logger.recordEvent(
-                worker,
-                order.getId(),
-                prev, newState,
-                order.getPrinter() == null ? null : order.getPrinter().getPrinterId()
-            );
-            
-            if (newState.isTerminal()) {
-                terminalCount++;
-            }
-            
-            //  EVENTO CAMBIO DE ESTADO
-            LOCK.notifyAll();
+        if (printerAction != null) printerAction.run();
+        OrderState prev = order.getCurrentState();
+        order.SetState(newState);
+
+        switch (newState) {
+            case OrderState.CREATED: ordersCreated.putOrder(order);break;
+            case OrderState.WAITING_VALIDATION: ordersWaitingValidation.putOrder(order);break;
+            case OrderState.READY_TO_PRINT: ordersReadyToPrint.putOrder(order);break;
+            case OrderState.PRINTED: ordersPrinted.putOrder(order); break;
+            case OrderState.APPROVED: break;
+            case OrderState.DEFECTIVE: break;
+            case OrderState.REJECTED: break;
+            case OrderState.PRINT_FAILED: break;
+            default:
+                    throw new IllegalArgumentException("No existe el estado: " + newState);
+        }
+
+        // Se registra DENTRO del lock: las filas de eventos.csv quedan en el mismo orden
+        // en que se confirman las transiciones. La secuencia la numera el Logger.
+
+        if (worker == null) {
+            Logger.recordCreated(order.getId());
+
+        } else {
+            Logger.recordEvent(worker, order.getId(), prev, order.getCurrentState(),
+                    order.getPrinter() == null ? null : order.getPrinter().getPrinterId());
+        }
+
+        if (newState.isTerminal()) {
+
+            terminalCount++;
+            allOrders.add(order);
         }
     }
 
-    public List<PrintOrder> getAllOrders(){
-        synchronized (LOCK){
-            return new ArrayList<>(orders);
-        }
+    public ArrayList<PrintOrder> getAllOrders() {
+        return allOrders;
     }
 }

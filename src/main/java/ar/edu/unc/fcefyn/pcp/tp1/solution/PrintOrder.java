@@ -27,7 +27,7 @@ public class PrintOrder {
     public void setPrinter(Printer pr){
         this.printer = pr;
     }
-    
+
     // not thread safe
     public OrderState getCurrentState() {
         return this.state;
@@ -42,4 +42,17 @@ public class PrintOrder {
     public int getValidationCount(){ return validationCount; }
     public int getPrintingCount(){ return printingCount; }
     public int getQualityControlCount(){ return qualityControlCount; }
+
+    public void incrementStageCount() {
+
+        switch (getCurrentState()) {
+
+            case OrderState.WAITING_VALIDATION -> this.assignmentCount ++;
+            case OrderState.READY_TO_PRINT -> this.validationCount ++;
+            case OrderState.PRINTED -> this.printingCount ++;
+            case OrderState.APPROVED -> this.qualityControlCount ++;
+
+            default -> {}
+        }
+    }
 }
