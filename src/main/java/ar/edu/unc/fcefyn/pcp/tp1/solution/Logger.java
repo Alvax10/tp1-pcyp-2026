@@ -9,17 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Escribe eventos.csv y elementos.csv dentro de config.outputDirectory().
- *
- * Recurso compartido: los writers y el contador de secuencia. Todos los metodos publicos son
- * static synchronized (monitor = Logger.class), asi que dos hilos nunca escriben a la vez.
- * Ademas, recordEvent se llama DENTRO del lock de OrderSource, por lo que las filas quedan en el
- * mismo orden en que se confirman las transiciones (lo pide el enunciado).
- *
- * Ciclo de vida: init(...) antes de arrancar los hilos -> record* durante la simulacion ->
- * close() despues de los join().
- */
 public final class Logger {
 
     public static final String EVENTS_HEADER =
@@ -35,10 +24,8 @@ public final class Logger {
     private Logger() {
     }
 
-    /**
-     * Crea (o pisa) los archivos en outputDirectory y escribe las cabeceras.
-     * startMillis es el instante de inicio de la simulacion, para calcular elapsedMs.
-     */
+    /** Crea (o pisa) los archivos en outputDirectory y escribe las cabeceras.
+     * startMillis es el instante de inicio de la simulacion, para calcular elapsedMs. */
     public static synchronized void init(Path outputDirectory, long simulationStartMillis) throws IOException {
         Files.createDirectories(outputDirectory);
         // newBufferedWriter sin opciones = CREATE + TRUNCATE_EXISTING: cada corrida empieza de cero
@@ -92,9 +79,7 @@ public final class Logger {
     }
 
     // ----------------------------------------------------------------------------------------
-    // Privados: siempre se ejecutan con el monitor Logger.class ya tomado
-
-    private static void writeEvent(String thread, int orderId, StageState stage, EventState event,
+    /* Privados: siempre se ejecutan con el monitor Logger.class ya tomado */private static void writeEvent(String thread, int orderId, StageState stage, EventState event,
                                    OrderState from, OrderState to, String printerId) {
         sequence++;
         long elapsed = Math.max(0, System.currentTimeMillis() - startMillis);

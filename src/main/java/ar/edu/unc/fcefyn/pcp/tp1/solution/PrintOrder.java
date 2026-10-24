@@ -51,7 +51,6 @@ public class PrintOrder {
             case OrderState.READY_TO_PRINT -> this.validationCount ++;
             case OrderState.PRINTED -> this.printingCount ++;
             case OrderState.APPROVED -> this.qualityControlCount ++;
-
             default -> {}
         }
     }

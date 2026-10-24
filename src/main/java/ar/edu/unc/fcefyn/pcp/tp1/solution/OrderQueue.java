@@ -49,8 +49,4 @@ public class OrderQueue {
             orderStateKey.notifyAll();
         }
     }
-
-    public List<PrintOrder> getList() {
-        return this.orderStateList;
-    }
 }

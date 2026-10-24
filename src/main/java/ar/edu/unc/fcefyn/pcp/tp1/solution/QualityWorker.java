@@ -6,22 +6,6 @@ import ar.edu.unc.fcefyn.pcp.tp1.api.SimulationConfig;
 
 /** --------------------------- STAGE 4 - QUALITY CONTROL ------------------------------ **/
 
-/*
- * Toma ordenes en PRINTED y decide, con OutcomeDecider.isQualityApproved:
- *     PRINTED -> APPROVED
- *     PRINTED -> DEFECTIVE
- *
- * En esta etapa NO se usan impresoras: la impresora ya fue liberada en PrintingWorker.
- * Ambos resultados son estados terminales, asi que cada orden que pasa por aca termina.
- *
- * Sincronizacion: este worker no tiene estado compartido propio.
- *     el acceso concu a las ordenes pasa por OrderSource (monitor LOCK):
- *   - getOrderInState(PRINTED) marca la orden como "processing" dentro del lock, por lo que
- *     dos QualityWorker no deben pueder auditar la misma orden (invariante 3).
- *   - Si no hay ordenes PRINTED, el hilo queda en LOCK.wait() (sin espera activa) hasta que
- *     un PrintingWorker haga SetOrderState(..., PRINTED) y llame a notifyAll().
- *   - Cuando todas las ordenes son terminales, getOrderInState devuelve null y el worker termina.
- */
 public class QualityWorker extends Worker {
 
     private final OrderSource orderSource; // de donde toma las ordenes PRINTED
@@ -58,6 +42,7 @@ public class QualityWorker extends Worker {
         // La demora (qualityControlDelayMillis) la aplica Worker.run() una vez por orden procesada.
         // No hay que liberar impresora: ya se libero en la etapa de impresion.
     }
+    
     //Decision determinista (fuera del lock: no toca estado compartido)
     private boolean isApproved(PrintOrder order) {
         return OutcomeDecider.isQualityApproved(order.getId(), config);

@@ -2,7 +2,6 @@ package ar.edu.unc.fcefyn.pcp.tp1.solution;
 
 import ar.edu.unc.fcefyn.pcp.tp1.api.OrderState;
 import java.util.ArrayList;
-import java.util.List;
 
 public class OrderSource {
 
@@ -40,19 +39,16 @@ public class OrderSource {
             ordersWaitingValidation.Close();
             ordersReadyToPrint.Close();
             ordersPrinted.Close();
-
             return null;
         }
 
-        switch (wanted) {
-
-            case OrderState.CREATED: return ordersCreated.takeOrder();
-            case OrderState.WAITING_VALIDATION: return ordersWaitingValidation.takeOrder();
-            case OrderState.READY_TO_PRINT: return ordersReadyToPrint.takeOrder();
-            case OrderState.PRINTED: return ordersPrinted.takeOrder();
-            default:
-                throw new IllegalArgumentException("La transición: " + wanted + " no es soportada \n");
-        }
+        return switch (wanted) {
+            case OrderState.CREATED -> ordersCreated.takeOrder();
+            case OrderState.WAITING_VALIDATION -> ordersWaitingValidation.takeOrder();
+            case OrderState.READY_TO_PRINT -> ordersReadyToPrint.takeOrder();
+            case OrderState.PRINTED -> ordersPrinted.takeOrder();
+            default -> throw new IllegalArgumentException("La transición: " + wanted + " no es soportada \n");
+        };
     }
 
     public void SetOrderState(PrintOrder order,OrderState newState, Worker worker) {
@@ -90,7 +86,6 @@ public class OrderSource {
         }
 
         if (newState.isTerminal()) {
-
             terminalCount++;
             allOrders.add(order);
         }
