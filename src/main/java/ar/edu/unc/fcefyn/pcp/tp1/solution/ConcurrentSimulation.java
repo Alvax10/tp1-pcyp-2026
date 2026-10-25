@@ -24,24 +24,16 @@ public final class ConcurrentSimulation implements Simulation {
     public SimulationResult execute(SimulationConfig config) throws InterruptedException {
         //Se guarda la hora de inicio
         long inicio = System.nanoTime();
-        //Creacion de los recursos compartidos
-        OrderSource orderSource = new OrderSource(config.totalOrders());
-        PrinterFarm printerFarm = new PrinterFarm(config.printerRows(),config.printerColumns());
+
         try {
             Logger.init(config.outputDirectory(), System.currentTimeMillis());
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudieron crear los archivos de resultados", e);
         }
 
-        /*Registro de la creacion de las 500 ordenes - Voy a recorrer la lista de ordenes
-         * Las ordenes nacen cuando arranca la simulación, y quien arranca la simulación es execute. Es el momento
-         * antes de que se creen los hilos. Después de eso, cada worker anota solo los cambios que él mismo provoca
-         * (CREATED → WAITING_VALIDATION, etc.)
-         */
-        // (la secuencia y el elapsedMs los calcula el Logger)
-        for(PrintOrder order : orderSource.getAllOrders()){
-            Logger.recordCreated(order.getId());
-        }
+        //Creacion de los recursos compartidos
+        OrderSource orderSource = new OrderSource(config.totalOrders());
+        PrinterFarm printerFarm = new PrinterFarm(config.printerRows(),config.printerColumns());
 
         /*Crear los workers de cada etapa, con la cantidad y la demora del config:
          * AssignWorker (assignmentThreads, assignmentDelayMillis),
@@ -72,17 +64,18 @@ public final class ConcurrentSimulation implements Simulation {
         *   Recorro la lista de workers y le asigno un hilo
         */
         List<Thread> threads = new ArrayList<>();
-        for(Worker worker : workers){
+        for(Worker worker : workers) {
             //Creo el hilo y le paso el worker correspondiente y su nombre
-            Thread thread = new Thread( worker, worker.getName());
+            Thread thread = new Thread(worker, worker.getName());
             threads.add(thread);
             //Arranco los hilos
             thread.start();
         }
         try{
-            for(Thread thread : threads){
+            for(Thread thread : threads) {
                 thread.join();
             }
+
         } catch (InterruptedException e) {
             System.out.println("Se interrumpieron los hilos antes de terminar");
             throw e; // no devolvemos un resultado con hilos todavia vivos
@@ -91,6 +84,7 @@ public final class ConcurrentSimulation implements Simulation {
         long durationMillis = (System.nanoTime() - inicio) / 1_000_000;
         boolean allThreadsTerminated = threads.stream().noneMatch(Thread::isAlive);
 
+
         /*
             Resultados: ya terminaron todos los hilos (join), asi que solo main toca estos datos.
         *   Recorro las ordenes (ordenadas por id): cuento por estado, armo los snapshots y escribo elementos.csv
@@ -98,19 +92,25 @@ public final class ConcurrentSimulation implements Simulation {
         List<OrderSnapshot> orderSnapshots = new ArrayList<>();
         Map<OrderState, Integer> totalsByState = new EnumMap<>(OrderState.class);
         int processedOrders = 0;
-        for(PrintOrder order : orderSource.getAllOrders()){
+
+
+        for(PrintOrder order : orderSource.getAllOrders()) {
+
             OrderState state = order.getCurrentState();
             String printerId = order.getPrinter() == null ? null : order.getPrinter().getPrinterId();
             totalsByState.merge(state, 1, Integer::sum);
             if(state.isTerminal()) processedOrders++;
+
             orderSnapshots.add(new OrderSnapshot(order.getId(), state, printerId, order.getAssignmentCount(),
                     order.getValidationCount(), order.getPrintingCount(), order.getQualityControlCount()));
+
             Logger.recordElement(order.getId(), state, printerId, order.getAssignmentCount(),
                     order.getValidationCount(), order.getPrintingCount(), order.getQualityControlCount());
         }
 
         //Cierro los archivos y escribo resumen.properties
         try {
+
             Logger.close();
             try (BufferedWriter writer = Files.newBufferedWriter(config.outputDirectory().resolve("resumen.properties"))) {
                 writer.write("totalOrders=" + config.totalOrders()); writer.newLine();
